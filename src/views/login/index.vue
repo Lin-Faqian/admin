@@ -4,18 +4,18 @@
           <el-form-item class="text">
               <span>博客后台管理系统</span><hr />
           </el-form-item>
-          <el-form-item prop="mobile">
-            <el-input v-model="user.mobile" placeholder="请输入账号" autocomplete="off">
+          <el-form-item prop="username">
+            <el-input v-model="user.username" placeholder="请输入账号" autocomplete="off">
               <template slot="prepend"><i class="el-icon-s-custom"></i></template>
             </el-input>
           </el-form-item>
-          <el-form-item prop="code">
-            <el-input type="password" v-model="user.code" placeholder="请输入密码" autocomplete="off" show-password>
+          <el-form-item prop="password">
+            <el-input type="password" v-model="user.password" placeholder="请输入密码" autocomplete="off" show-password>
               <template slot="prepend"><i class="el-icon-lock"></i></template>
             </el-input>
           </el-form-item>
-          <el-form-item>
-            <el-checkbox v-model="checked">我已阅读并同意用户协议和隐私条款</el-checkbox>
+          <el-form-item prop="checked">
+            <el-checkbox v-model="user.checked">我已阅读并同意用户协议和隐私条款</el-checkbox>
           </el-form-item>
           <el-form-item>
             <el-button type="primary" @click="submitForm" :loading="loading">登录</el-button>
@@ -26,28 +26,35 @@
 </template>
 
 <script>
-import request from '@/utils/request.js'
+import { loginReq } from '@/api/user.js'
 
 export default {
+  name: 'login',
   components: {
   },
   props: {
   },
   data () {
     return {
-      checked: false,
       loading: false,
       user: {
-        mobile: '', // 13911111111
-        code: ''// 246810
+        username: '', // 13911111111
+        password: '', // 246810
+        checked: false
       },
       rules: {
-        mobile: [
+        username: [
           { required: true, message: '账号不能为空', trigger: 'blur' }
         ],
-        code: [
+        password: [
           { required: true, message: '密码不能为空', trigger: 'blur' }
-        ]
+        ],
+        checked: [{
+          validator: (rule, value, callback) => {
+            value ? callback() : callback(new Error('请同意用户协议'))
+          },
+          trigger: blur
+        }]
       }
     }
   },
@@ -64,19 +71,23 @@ export default {
       this.$router.replace('/')
       window.location.reload()
     },
-    submitForm () {
+    login () {
       this.loading = true
-      const user = this.user
-      request({
-        method: 'post',
-        url: '/user',
-        data: user
-      }).then(res => {
+      loginReq(this.user).then(res => {
         this.loading = false
+        this.$router.push('/home')
         console.log(res)
       }).catch(err => {
         this.loading = false
         console.log(err)
+      })
+    },
+    submitForm () {
+      this.$refs.user.validate(valid => {
+        if (!valid) {
+          return
+        }
+        this.login()
       })
     }
   }
